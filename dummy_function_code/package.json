@@ -1,0 +1,11 @@
+{
+    "name": "user-auth-service-placeholder",
+    "version": "0.0.1",
+    "description": "Placeholder for User Auth Service",
+    "main": "index.js",
+    "dependencies": {
+    },
+    "engines": {
+      "node": ">=18"
+    }
+}
