@@ -20,29 +20,29 @@ resource "google_cloudfunctions2_function" "user_auth_service" {
   project     = var.gcp_project_id
 
   build_config {
-    runtime     = "nodejs20" // Your chosen runtime
-    entry_point = "handleAuthRequest" // The function name in your Go code
+    runtime     = "nodejs20" 
+    entry_point = "handleAuthRequest"
     source {
       storage_source {
         bucket = google_storage_bucket.cloud_functions_source_bucket.name
-        // Use the output from the google_storage_bucket_object resource
-        object = google_storage_bucket_object.user_auth_function_source_zip.name 
+        object = google_storage_bucket_object.user_auth_function_source_zip.name
       }
     }
   }
 
   service_config {
     max_instance_count = 3
-    min_instance_count = 0
+    min_instance_count = 0 
     available_memory   = "256Mi"
     timeout_seconds    = 60
     all_traffic_on_latest_revision = true
     ingress_settings               = "ALLOW_ALL"
+    service_account_email          = google_service_account.user_auth_function_sa.email // <--- ASSIGN THE SA
   }
 
-  // Ensure the function depends on the object being created
   depends_on = [
-    google_storage_bucket_object.user_auth_function_source_zip
+    google_storage_bucket_object.user_auth_function_source_zip,
+    google_service_account.user_auth_function_sa // <--- ADD DEPENDENCY ON SA CREATION
   ]
 }
 
@@ -55,7 +55,7 @@ output "user_auth_service_uri" {
 resource "google_cloud_run_service_iam_member" "user_auth_service_invoker" {
   project  = google_cloudfunctions2_function.user_auth_service.project
   location = google_cloudfunctions2_function.user_auth_service.location
-  service  = google_cloudfunctions2_function.user_auth_service.name 
+  service  = google_cloudfunctions2_function.user_auth_service.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 
