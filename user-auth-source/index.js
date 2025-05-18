@@ -24,40 +24,67 @@ try {
  */
 exports.handleAuthRequest = async (req, res) => {
   console.log('Received request:', req.method, req.path);
+  
+  // Set CORS headers
+  // Allow requests from any origin. For production, you might want to restrict this
+  // to specific domains, e.g., res.setHeader('Access-Control-Allow-Origin', 'https://yourfrontend.com');
+  //TODO: Change this to just be the front end in production
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '3600'); 
 
-  if (req.method !== 'POST' && req.path !== '/verifyToken') {
-    // For now, let's just have a simple public endpoint
-    if (req.path === '/') {
+  // Handle OPTIONS preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('Inside OPTIONS block. Setting status to 204.');
+    res.status(204).send(''); 
+    console.log('After res.status(204).send(). Returning from OPTIONS block.');
+    return;
+  }
+  console.log('After OPTIONS block. req.method:', req.method, 'req.path:', req.path);
+
+  if (req.path === '/') {
+    console.log('Inside / path block. req.method:', req.method);
+    if (req.method === 'GET') {
+       console.log('Inside / and GET block. Sending 200 for root.');
        return res.status(200).send('User Auth Service (Node.js with Firebase Admin SDK initialized). Use POST /verifyToken to test token verification.');
     }
+    console.log('Inside / path block but not GET. Sending 405.');
     return res.status(405).send('Method Not Allowed or Invalid Path');
   }
 
-  // Example: A protected endpoint that verifies a Firebase ID token
-  if (req.path === '/verifyToken') {
-    const authorizationHeader = req.headers.authorization;
+  // Protected endpoint that verifies a Firebase ID token
+  if (req.path === '/auth/verifyToken') {
+    console.log(`HIT /auth/verifyToken. Method is: ${req.method}`); 
+    if (req.method === 'POST') {
+      console.log('Correctly identified POST for /auth/verifyToken');
+      const authorizationHeader = req.headers.authorization;
 
-    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
-      console.log('No Bearer token found in Authorization header.');
-      return res.status(401).send('Unauthorized: No token provided.');
-    }
+      if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+        console.log('No Bearer token found in Authorization header.');
+        return res.status(401).send('Unauthorized: No token provided.');
+      }
 
-    const idToken = authorizationHeader.split('Bearer ')[1];
+      const idToken = authorizationHeader.split('Bearer ')[1];
 
-    try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      const uid = decodedToken.uid;
-      console.log('ID Token correctly decoded:', decodedToken);
-      // You can now trust this UID and use it to fetch user data or perform actions
-      // For example, fetch user record:
-      // const userRecord = await admin.auth().getUser(uid);
-      return res.status(200).send({ message: `Authorized. UID: ${uid}`, decodedToken });
-    } catch (error) {
-      console.error('Error verifying ID token:', error);
-      return res.status(403).send('Unauthorized: Invalid token.');
+      console.log("Received ID Token on Backend for verification:", idToken); // Log the raw token
+
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+        console.log('ID Token correctly decoded:', decodedToken);
+        return res.status(200).send({ message: `Authorized. UID: ${uid}`, decodedToken });
+      } catch (error) {
+        console.error('Error verifying ID token:', error);
+        return res.status(403).send('Unauthorized: Invalid token.');
+      }
+    } else {
+      console.log(`Method for /auth/verifyToken was NOT POST, it was: ${req.method}. Sending 405.`);
+      return res.status(405).send(`Method Not Allowed for ${req.path}. Use POST.`);
     }
   }
 
-  // Fallback for other POST requests or paths not handled
+  // Fallback for other paths not handled
+  console.log('Path not matched. Sending 404.');
   return res.status(404).send('Not Found');
 };

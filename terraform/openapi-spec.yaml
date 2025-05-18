@@ -1,0 +1,64 @@
+# terraform/openapi-spec.yaml
+swagger: '2.0'
+info:
+  title: "User Authentication API"
+  description: "API for user authentication and token verification via API Gateway."
+  version: 1.0.0
+schemes:
+  - https
+produces:
+  - application/json
+
+paths:
+  /auth/verifyToken:
+    options:
+      summary: "CORS support"
+      operationId: "corsAuthVerifyToken"
+      x-google-backend:
+        address: ${user_auth_function_url}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses:
+        '204':
+          description: "No Content, CORS preflight successful"
+        default:
+          description: "Default response for CORS preflight"
+    post:
+      summary: "Verifies a Firebase ID Token"
+      operationId: "verifyIdTokenPost"
+      x-google-backend:
+        address: ${user_auth_function_url}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        disable_auth: true #This makes the app use the auth token from the frontend to verify the key
+      responses:
+        '200':
+          description: "Token verified successfully."
+        '401':
+          description: "Unauthorized - No token provided."
+        '403':
+          description: "Forbidden - Token invalid or backend logic denied access."
+        default:
+          description: "Unexpected error."
+
+  /:
+    options:
+      summary: "CORS support for root"
+      operationId: "corsRoot"
+      x-google-backend:
+        address: ${user_auth_function_url}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses:
+        '204':
+          description: "No Content, CORS preflight successful"
+        default:
+          description: "Default response for CORS preflight"
+    get:
+      summary: "Service root information"
+      operationId: "getRootInfo"
+      x-google-backend:
+        address: ${user_auth_function_url}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses:
+        '200':
+          description: "Service information"
+        default:
+          description: "Unexpected error."

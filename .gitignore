@@ -110,3 +110,5 @@ yarn-error.log*
 dist/
 build/
 out/
+
+dev_frontend/config.js

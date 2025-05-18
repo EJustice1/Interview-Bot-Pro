@@ -4,7 +4,7 @@ resource "google_project_service" "firebase_apis" {
   for_each = toset([
     "firebase.googleapis.com",                          
     "identitytoolkit.googleapis.com",
-                  
+    "apigateway.googleapis.com",
     "firestore.googleapis.com"                        
   ])
   // "firebaseauth.googleapis.com",                      

@@ -2,7 +2,7 @@
 
 terraform {
   backend "gcs" {
-    bucket = "interviewbotpro-460106-tfstate" 
+    bucket = var.terraform_state_bucket_name
     prefix = "terraform/state" 
   }
 }
